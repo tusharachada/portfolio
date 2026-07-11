@@ -16,6 +16,9 @@ pnpm-debug.log*
 .env
 .env.production
 
+# local maintainer notes (machine-specific / not for public repo)
+docs/maintainer-notes.md
+
 # macOS
 .DS_Store
 

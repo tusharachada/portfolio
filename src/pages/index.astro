@@ -1,13 +1,11 @@
 ---
 import { getCollection, getEntry, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import { site, skillGroups, certifications, training } from '../config';
+import { site, skillGroups, certifications, training, careerStats } from '../config';
 
-// About: single markdown file rendered into HTML.
 const aboutEntry = await getEntry('about', 'about');
 const AboutContent = aboutEntry ? (await render(aboutEntry)).Content : null;
 
-// Experience, sorted by the `order` field.
 const experience = (await getCollection('experience')).sort(
   (a, b) => a.data.order - b.data.order
 );
@@ -15,7 +13,6 @@ const renderedExperience = await Promise.all(
   experience.map(async (e) => ({ ...e, Body: (await render(e)).Content }))
 );
 
-// Selected work / projects, sorted by the `order` field.
 const projects = (await getCollection('projects')).sort(
   (a, b) => a.data.order - b.data.order
 );
@@ -23,7 +20,6 @@ const renderedProjects = await Promise.all(
   projects.map(async (p) => ({ ...p, Body: (await render(p)).Content }))
 );
 
-// Education, sorted by the `order` field.
 const education = (await getCollection('education')).sort(
   (a, b) => a.data.order - b.data.order
 );
@@ -31,67 +27,121 @@ const renderedEducation = await Promise.all(
   education.map(async (e) => ({ ...e, Body: (await render(e)).Content }))
 );
 
+// Build a monogram from initials, e.g. "Tushara Chada" -> "TC"
+const monogram = site.name
+  .split(' ')
+  .map((w) => w[0])
+  .join('')
+  .slice(0, 2)
+  .toUpperCase();
+
 const year = new Date().getFullYear();
 ---
 
 <Base>
-  <header class="hero">
-    <div class="wrap hero-inner">
-      {
-        site.photo && (
-          <div class="avatar">
-            <img
-              src={site.photo}
-              alt={`Portrait of ${site.name}`}
-              width="180"
-              height="180"
-              loading="eager"
-            />
-          </div>
-        )
-      }
-      <div class="hero-text">
-        <h1>{site.name}</h1>
-        <p class="role">{site.role}</p>
-        <p class="tagline">{site.tagline}</p>
-
-        <ul class="links">
-        {site.location && <li class="location">{site.location}</li>}
-        {
-          site.email && (
-            <li>
-              <a href={`mailto:${site.email}`}>Email</a>
-            </li>
-          )
-        }
-        {
-          site.resumeUrl && (
-            <li>
-              <a href={site.resumeUrl}>Résumé</a>
-            </li>
-          )
-        }
-        {
-          site.links.map((link) => (
-            <li>
-              <a href={link.url} target="_blank" rel="noopener noreferrer">
-                {link.label}
-              </a>
-            </li>
-          ))
-        }
-        </ul>
-      </div>
+  <!-- ===== Nav ===== -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark">{monogram}</span>
+        <span class="brand-name">{site.name}</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#about">About</a>
+        <a href="#experience">Experience</a>
+        <a href="#work">Work</a>
+        <a href="#skills">Skills</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <a class="nav-cta" href="#contact">Get in touch</a>
     </div>
   </header>
 
+  <!-- ===== Hero ===== -->
+  <section class="hero" id="top">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">{site.role}</p>
+        <h1 class="hero-title">{site.name}</h1>
+        <p class="hero-lead">{site.tagline}</p>
+        {site.location && <p class="hero-loc">{site.location}</p>}
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#contact">Get in touch</a>
+          <a class="btn btn-ghost" href="#experience">View experience</a>
+          {
+            site.links.map((link) => (
+              <a
+                class="btn btn-text"
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {link.label} ↗
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+      {
+        site.photo && (
+          <div class="hero-media">
+            <div class="hero-portrait">
+              <img
+                src={site.photo}
+                alt={`Portrait of ${site.name}`}
+                width="520"
+                height="640"
+                loading="eager"
+              />
+            </div>
+          </div>
+        )
+      }
+    </div>
+
+    <a class="scroll-cue" href="#stats" aria-label="Scroll down">
+      <span></span>
+    </a>
+  </section>
+
+  <!-- ===== Stats band ===== -->
+  {
+    careerStats.length > 0 && (
+      <section class="stats-band" id="stats">
+        <div class="stats-grid">
+          {careerStats.map((s) => (
+            <div class="stat reveal">
+              <p class="stat-value">
+                <span class="affix">{s.prefix}</span>
+                <span
+                  class="num"
+                  data-count={s.value}
+                  data-decimals={s.decimals}
+                >
+                  {s.value}
+                </span>
+                <span class="affix">{s.suffix}</span>
+              </p>
+              <p class="stat-label">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
   <main>
+    <!-- ===== About ===== -->
     {
       AboutContent && (
-        <section id="about">
-          <div class="wrap">
-            <h2>About</h2>
-            <div class="prose">
+        <section class="section" id="about">
+          <div class="section-grid">
+            <div class="section-head reveal">
+              <p class="eyebrow">01 — About</p>
+              <h2>A little background</h2>
+            </div>
+            <div class="section-body prose lead reveal">
               <AboutContent />
             </div>
           </div>
@@ -99,19 +149,35 @@ const year = new Date().getFullYear();
       )
     }
 
+    <!-- ===== Experience ===== -->
     {
       renderedExperience.length > 0 && (
-        <section id="experience">
-          <div class="wrap">
-            <h2>Experience</h2>
+        <section class="section" id="experience">
+          <div class="section-head wide reveal">
+            <p class="eyebrow">02 — Experience</p>
+            <h2>Where I've made an impact</h2>
+          </div>
+          <div class="timeline">
             {renderedExperience.map((job) => (
-              <article class="item">
-                <h3>{job.data.role}</h3>
-                <p class="meta">
-                  {job.data.company} · {job.data.period}
-                </p>
-                <div class="body prose">
-                  <job.Body />
+              <article class="xp reveal">
+                <div class="xp-side">
+                  <p class="xp-period">{job.data.period}</p>
+                  <p class="xp-company">{job.data.company}</p>
+                </div>
+                <div class="xp-main">
+                  <h3 class="xp-role">{job.data.role}</h3>
+                  {job.data.highlights && job.data.highlights.length > 0 && (
+                    <ul class="chips">
+                      {job.data.highlights.map((h) => (
+                        <li>
+                          <strong>{h.value}</strong> {h.label}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div class="xp-body prose">
+                    <job.Body />
+                  </div>
                 </div>
               </article>
             ))}
@@ -120,28 +186,32 @@ const year = new Date().getFullYear();
       )
     }
 
+    <!-- ===== Selected work ===== -->
     {
       renderedProjects.length > 0 && (
-        <section id="work">
-          <div class="wrap">
-            <h2>Selected Work</h2>
+        <section class="section" id="work">
+          <div class="section-head wide reveal">
+            <p class="eyebrow">03 — Selected Work</p>
+            <h2>A project I'm proud of</h2>
+          </div>
+          <div class="work-list">
             {renderedProjects.map((project) => (
-              <article class="item">
-                <h3>
-                  {project.data.url ? (
+              <article class="work reveal">
+                <div class="work-head">
+                  <h3>{project.data.title}</h3>
+                  {project.data.url && (
                     <a
+                      class="work-link"
                       href={project.data.url}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {project.data.title}
+                      Visit ↗
                     </a>
-                  ) : (
-                    project.data.title
                   )}
-                </h3>
-                <p class="meta">{project.data.summary}</p>
-                <div class="body prose">
+                </div>
+                <p class="work-summary">{project.data.summary}</p>
+                <div class="prose">
                   <project.Body />
                 </div>
                 {project.data.tags && (
@@ -158,13 +228,17 @@ const year = new Date().getFullYear();
       )
     }
 
+    <!-- ===== Skills ===== -->
     {
       skillGroups.length > 0 && (
-        <section id="skills">
-          <div class="wrap">
-            <h2>Skills</h2>
+        <section class="section" id="skills">
+          <div class="section-head wide reveal">
+            <p class="eyebrow">04 — Skills</p>
+            <h2>What I work with</h2>
+          </div>
+          <div class="skills-grid">
             {skillGroups.map((group) => (
-              <div class="skill-group">
+              <div class="skill-card reveal">
                 <h3>{group.group}</h3>
                 <ul class="tags">
                   {group.items.map((item) => (
@@ -178,20 +252,24 @@ const year = new Date().getFullYear();
       )
     }
 
+    <!-- ===== Education ===== -->
     {
       renderedEducation.length > 0 && (
-        <section id="education">
-          <div class="wrap">
-            <h2>Education</h2>
+        <section class="section" id="education">
+          <div class="section-head wide reveal">
+            <p class="eyebrow">05 — Education</p>
+            <h2>Academic background</h2>
+          </div>
+          <div class="edu-grid">
             {renderedEducation.map((entry) => (
-              <article class="item">
+              <article class="edu reveal">
+                <p class="edu-date">{entry.data.date}</p>
                 <h3>{entry.data.degree}</h3>
-                <p class="meta">
+                <p class="edu-school">
                   {entry.data.school}
-                  {entry.data.location && <> · {entry.data.location}</>} ·{' '}
-                  {entry.data.date}
+                  {entry.data.location && <> · {entry.data.location}</>}
                 </p>
-                <div class="body prose">
+                <div class="prose">
                   <entry.Body />
                 </div>
               </article>
@@ -201,13 +279,17 @@ const year = new Date().getFullYear();
       )
     }
 
+    <!-- ===== Certifications ===== -->
     {
       (certifications.length > 0 || training.length > 0) && (
-        <section id="certifications">
-          <div class="wrap">
-            <h2>Certifications & Training</h2>
+        <section class="section" id="certifications">
+          <div class="section-head wide reveal">
+            <p class="eyebrow">06 — Credentials</p>
+            <h2>Certifications & training</h2>
+          </div>
+          <div class="creds-grid">
             {certifications.length > 0 && (
-              <div class="skill-group">
+              <div class="skill-card reveal">
                 <h3>Certifications</h3>
                 <ul class="stack">
                   {certifications.map((c) => (
@@ -217,7 +299,7 @@ const year = new Date().getFullYear();
               </div>
             )}
             {training.length > 0 && (
-              <div class="skill-group">
+              <div class="skill-card reveal">
                 <h3>Training</h3>
                 <ul class="stack">
                   {training.map((t) => (
@@ -230,18 +312,41 @@ const year = new Date().getFullYear();
         </section>
       )
     }
+
+    <!-- ===== Contact ===== -->
+    <section class="contact" id="contact">
+      <div class="contact-inner reveal">
+        <p class="eyebrow">07 — Contact</p>
+        <h2>Let's work together</h2>
+        <p class="contact-lead">
+          Open to supply chain, procurement, and data analyst roles. The fastest
+          way to reach me is email.
+        </p>
+        <div class="hero-actions">
+          {site.email && (
+            <a class="btn btn-primary" href={`mailto:${site.email}`}>
+              {site.email}
+            </a>
+          )}
+          {site.links.map((link) => (
+            <a
+              class="btn btn-ghost"
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {link.label} ↗
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
   </main>
 
-  <footer>
-    <div class="wrap">
-      © {year} {site.fullName ?? site.name}
-      {
-        site.email && (
-          <>
-            · <a href={`mailto:${site.email}`}>{site.email}</a>
-          </>
-        )
-      }
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>© {year} {site.fullName ?? site.name}</span>
+      <a href="#top">Back to top ↑</a>
     </div>
   </footer>
 </Base>

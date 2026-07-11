@@ -43,6 +43,17 @@ export const site = {
 };
 
 /**
+ * Headline career metrics for the animated stats band. The number counts up
+ * when scrolled into view; `prefix`/`suffix` wrap it (e.g. "$" + 5 + "K+").
+ */
+export const careerStats = [
+  { value: 30, decimals: 0, prefix: '~', suffix: '%', label: 'Fewer overdue payments' },
+  { value: 5, decimals: 0, prefix: '$', suffix: 'K+', label: 'Procurement savings' },
+  { value: 12, decimals: 0, prefix: '', suffix: ' hrs/wk', label: 'Manual work automated' },
+  { value: 1, decimals: 0, prefix: '', suffix: 'M+', label: 'Records analyzed' },
+];
+
+/**
  * Skills, grouped by area. Edit the lists below or add a new group.
  */
 export const skillGroups = [

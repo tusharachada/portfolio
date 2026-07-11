@@ -24,22 +24,155 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Add 'js' ASAP so motion only hides content when JS is available -->
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
 
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
     <link rel="canonical" href={canonical} />
 
-    <!-- Open Graph / social sharing -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDescription} />
     <meta property="og:url" content={canonical} />
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
+    <div class="scroll-progress" aria-hidden="true"></div>
+
+    <div class="bg-decor" aria-hidden="true">
+      <span class="blob blob-1"></span>
+      <span class="blob blob-2"></span>
+      <span class="blob blob-3"></span>
+    </div>
+
     <slot />
+
+    <script is:inline>
+      (function () {
+        var reduce = window.matchMedia(
+          '(prefers-reduced-motion: reduce)'
+        ).matches;
+
+        /* ---- Scroll reveal ---- */
+        var revealEls = document.querySelectorAll('.reveal');
+        if (reduce || !('IntersectionObserver' in window)) {
+          revealEls.forEach(function (el) {
+            el.classList.add('in');
+          });
+        } else {
+          var revealIO = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add('in');
+                  revealIO.unobserve(entry.target);
+                }
+              });
+            },
+            { threshold: 0.14, rootMargin: '0px 0px -6% 0px' }
+          );
+          revealEls.forEach(function (el) {
+            revealIO.observe(el);
+          });
+        }
+
+        /* ---- Count-up stats ---- */
+        function runCounter(el) {
+          var target = parseFloat(el.getAttribute('data-count'));
+          var dp = parseInt(el.getAttribute('data-decimals') || '0', 10);
+          if (reduce) {
+            el.textContent = target.toFixed(dp);
+            return;
+          }
+          var dur = 1400;
+          var start = null;
+          function step(ts) {
+            if (start === null) start = ts;
+            var p = Math.min((ts - start) / dur, 1);
+            var eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = (target * eased).toFixed(dp);
+            if (p < 1) requestAnimationFrame(step);
+            else el.textContent = target.toFixed(dp);
+          }
+          requestAnimationFrame(step);
+        }
+        var counters = document.querySelectorAll('[data-count]');
+        if (!('IntersectionObserver' in window)) {
+          counters.forEach(runCounter);
+        } else {
+          var countIO = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                  runCounter(entry.target);
+                  countIO.unobserve(entry.target);
+                }
+              });
+            },
+            { threshold: 0.6 }
+          );
+          counters.forEach(function (el) {
+            countIO.observe(el);
+          });
+        }
+
+        /* ---- Sticky nav state + scroll progress ---- */
+        var nav = document.querySelector('.nav');
+        var progress = document.querySelector('.scroll-progress');
+        var hero = document.querySelector('.hero-portrait');
+        function onScroll() {
+          var y = window.scrollY || window.pageYOffset;
+          if (nav) nav.classList.toggle('scrolled', y > 24);
+          if (progress) {
+            var h =
+              document.documentElement.scrollHeight - window.innerHeight;
+            progress.style.transform =
+              'scaleX(' + (h > 0 ? y / h : 0) + ')';
+          }
+          if (hero && !reduce) {
+            hero.style.transform = 'translateY(' + y * 0.06 + 'px)';
+          }
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+
+        /* ---- Scroll spy: active nav link ---- */
+        var navLinks = Array.prototype.slice.call(
+          document.querySelectorAll('.nav-links a[href^="#"]')
+        );
+        var sections = navLinks
+          .map(function (a) {
+            return document.querySelector(a.getAttribute('href'));
+          })
+          .filter(Boolean);
+        if ('IntersectionObserver' in window && sections.length) {
+          var spyIO = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                  navLinks.forEach(function (a) {
+                    a.classList.toggle(
+                      'active',
+                      a.getAttribute('href') === '#' + entry.target.id
+                    );
+                  });
+                }
+              });
+            },
+            { rootMargin: '-45% 0px -50% 0px' }
+          );
+          sections.forEach(function (s) {
+            spyIO.observe(s);
+          });
+        }
+      })();
+    </script>
   </body>
 </html>

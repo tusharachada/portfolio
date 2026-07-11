@@ -32,6 +32,10 @@ const experience = defineCollection({
     period: z.string(),
     // Lower numbers show first (put most recent at the top).
     order: z.number().default(100),
+    // Optional headline metrics shown as a stat strip at the top of the entry.
+    highlights: z
+      .array(z.object({ value: z.string(), label: z.string() }))
+      .optional(),
   }),
 });
 
