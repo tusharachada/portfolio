@@ -1,0 +1,247 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import { site, skillGroups, certifications, training } from '../config';
+
+// About: single markdown file rendered into HTML.
+const aboutEntry = await getEntry('about', 'about');
+const AboutContent = aboutEntry ? (await render(aboutEntry)).Content : null;
+
+// Experience, sorted by the `order` field.
+const experience = (await getCollection('experience')).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const renderedExperience = await Promise.all(
+  experience.map(async (e) => ({ ...e, Body: (await render(e)).Content }))
+);
+
+// Selected work / projects, sorted by the `order` field.
+const projects = (await getCollection('projects')).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const renderedProjects = await Promise.all(
+  projects.map(async (p) => ({ ...p, Body: (await render(p)).Content }))
+);
+
+// Education, sorted by the `order` field.
+const education = (await getCollection('education')).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const renderedEducation = await Promise.all(
+  education.map(async (e) => ({ ...e, Body: (await render(e)).Content }))
+);
+
+const year = new Date().getFullYear();
+---
+
+<Base>
+  <header class="hero">
+    <div class="wrap hero-inner">
+      {
+        site.photo && (
+          <div class="avatar">
+            <img
+              src={site.photo}
+              alt={`Portrait of ${site.name}`}
+              width="180"
+              height="180"
+              loading="eager"
+            />
+          </div>
+        )
+      }
+      <div class="hero-text">
+        <h1>{site.name}</h1>
+        <p class="role">{site.role}</p>
+        <p class="tagline">{site.tagline}</p>
+
+        <ul class="links">
+        {site.location && <li class="location">{site.location}</li>}
+        {
+          site.email && (
+            <li>
+              <a href={`mailto:${site.email}`}>Email</a>
+            </li>
+          )
+        }
+        {
+          site.resumeUrl && (
+            <li>
+              <a href={site.resumeUrl}>Résumé</a>
+            </li>
+          )
+        }
+        {
+          site.links.map((link) => (
+            <li>
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    {
+      AboutContent && (
+        <section id="about">
+          <div class="wrap">
+            <h2>About</h2>
+            <div class="prose">
+              <AboutContent />
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      renderedExperience.length > 0 && (
+        <section id="experience">
+          <div class="wrap">
+            <h2>Experience</h2>
+            {renderedExperience.map((job) => (
+              <article class="item">
+                <h3>{job.data.role}</h3>
+                <p class="meta">
+                  {job.data.company} · {job.data.period}
+                </p>
+                <div class="body prose">
+                  <job.Body />
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      renderedProjects.length > 0 && (
+        <section id="work">
+          <div class="wrap">
+            <h2>Selected Work</h2>
+            {renderedProjects.map((project) => (
+              <article class="item">
+                <h3>
+                  {project.data.url ? (
+                    <a
+                      href={project.data.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {project.data.title}
+                    </a>
+                  ) : (
+                    project.data.title
+                  )}
+                </h3>
+                <p class="meta">{project.data.summary}</p>
+                <div class="body prose">
+                  <project.Body />
+                </div>
+                {project.data.tags && (
+                  <ul class="tags">
+                    {project.data.tags.map((tag) => (
+                      <li>{tag}</li>
+                    ))}
+                  </ul>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      skillGroups.length > 0 && (
+        <section id="skills">
+          <div class="wrap">
+            <h2>Skills</h2>
+            {skillGroups.map((group) => (
+              <div class="skill-group">
+                <h3>{group.group}</h3>
+                <ul class="tags">
+                  {group.items.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      renderedEducation.length > 0 && (
+        <section id="education">
+          <div class="wrap">
+            <h2>Education</h2>
+            {renderedEducation.map((entry) => (
+              <article class="item">
+                <h3>{entry.data.degree}</h3>
+                <p class="meta">
+                  {entry.data.school}
+                  {entry.data.location && <> · {entry.data.location}</>} ·{' '}
+                  {entry.data.date}
+                </p>
+                <div class="body prose">
+                  <entry.Body />
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      (certifications.length > 0 || training.length > 0) && (
+        <section id="certifications">
+          <div class="wrap">
+            <h2>Certifications & Training</h2>
+            {certifications.length > 0 && (
+              <div class="skill-group">
+                <h3>Certifications</h3>
+                <ul class="stack">
+                  {certifications.map((c) => (
+                    <li>{c}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {training.length > 0 && (
+              <div class="skill-group">
+                <h3>Training</h3>
+                <ul class="stack">
+                  {training.map((t) => (
+                    <li>{t}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </section>
+      )
+    }
+  </main>
+
+  <footer>
+    <div class="wrap">
+      © {year} {site.fullName ?? site.name}
+      {
+        site.email && (
+          <>
+            · <a href={`mailto:${site.email}`}>{site.email}</a>
+          </>
+        )
+      }
+    </div>
+  </footer>
+</Base>
