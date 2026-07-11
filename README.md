@@ -6,7 +6,7 @@ site on Cloudflare Pages.
 
 - **Zero-maintenance hosting**: static files on Cloudflare's global network.
 - **Automatic HTTPS**: SSL is issued and renewed by Cloudflare. Never touch it.
-- **Edit in Markdown**: change a `.md` file, push to GitHub, the site rebuilds.
+- **Edit in Markdown**: change a `.md` file, push to GitHub, the site rebuilds
 
 ---
 
